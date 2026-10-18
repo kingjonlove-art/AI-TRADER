@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html><!DOCTYPE html>
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
@@ -247,7 +247,430 @@ button:disabled {
         <option value="CAD/JPY">CAD/JPY</option>
     </select>
 
-    <label for="api-key">Alpha Vantage API Key</label>
+    <label for="api-key">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</label>
+    <input
+        id="api-key"
+        type="password"
+        placeholder="এখানে নিজের API Key দিন"
+        autocomplete="off"
+    >
+
+    <button class="btn" id="analyze-btn" onclick="startAnalysis()">
+        ANALYZE MARKET
+    </button>
+
+    <p class="small">
+        API Key ছাড়া লাইভ ডেটা আনা যাবে না।
+        API-র সীমাবদ্ধতা ও সমর্থিত পেয়ার অনুযায়ী ফলাফল বদলাতে পারে।
+    </p>
+</div>
+
+<div class="dashboard-container">
+
+    <div class="panel">
+        <h3>Market Signal</h3>
+
+        <div id="price-display">Live Price: --</div>
+
+        <div id="signal-display">WAIT</div>
+
+        <div id="analysis-details">
+            মার্কেট বিশ্লেষণের জন্য Analyze Market চাপুন।
+        </div>
+
+        <p id="signal-time" class="small"></p>
+
+        <hr style="border-color:#30303a">
+
+        <h3>Trade Result Tracker</h3>
+
+        <button class="win-btn" onclick="recordTrade('WIN')">
+            Mark as WIN
+        </button>
+
+        <button class="loss-btn" onclick="recordTrade('LOSS')">
+            Mark as LOSS
+        </button>
+
+        <br>
+
+        <button class="reset-btn" onclick="resetStats()">
+            Reset Stats
+        </button>
+
+        <div id="stats-display">
+            Trades: 0 | Wins: 0 | Win Rate: 0%
+        </div>
+
+        <div id="total-wins">
+            Wins in Last 30 Trades: 0
+        </div>
+    </div>
+
+    <div class="panel">
+        <h3>Market Trend Visualization</h3>
+
+        <div class="chart-container" id="chart-container">
+            লাইভ মার্কেট ডেটা এলে এখানে সর্বশেষ দাম ও ট্রেন্ড দেখানো হবে।
+        </div>
+
+        <div id="system-status" class="status">
+            System ready.
+        </div>
+    </div>
+
+</div>
+
+<div class="panel">
+    <h3>Risk Management</h3>
+
+    <p id="risk-mgmt">
+        প্রতি ট্রেডে ঝুঁকি সীমিত রাখুন।
+    </p>
+
+    <p class="small">
+        কোনো সিগন্যাল নিশ্চিত নয়। আগে ডেমো অ্যাকাউন্টে পরীক্ষা করুন।
+        API থেকে আসা ডেটা ও আপনার ব্রোকারের দাম আলাদা হতে পারে।
+    </p>
+
+    <div id="demo-warning">
+        সতর্কতা: লাইভ ডেটা না এলে কোনো সিগন্যালকে লাইভ সিগন্যাল মনে করবেন না।
+    </div>
+</div>
+
+<script>
+"use strict";
+
+/* ==============================
+   STATE
+============================== */
+
+let tradeHistory = [];
+let countdownInterval = null;
+let requestInProgress = false;
+let lastAnalysis = null;
+
+const $ = id => document.getElementById(id);
+
+/* ==============================
+   TIME DISPLAY
+============================== */
+
+function updateTimes() {
+    const zone = $("timezone-select").value;
+
+    try {
+        const time = new Intl.DateTimeFormat("en-GB", {
+            timeZone: zone,
+            dateStyle: "medium",
+            timeStyle: "medium",
+            hour12: false
+        }).format(new Date());
+
+        $("zone-timer").textContent = zone + " Time: " + time;
+    } catch (error) {
+        $("zone-timer").textContent = "Time zone unavailable.";
+    }
+}
+
+$("timezone-select").addEventListener("change", updateTimes);
+
+setInterval(updateTimes, 1000);
+updateTimes();
+
+/* ==============================
+   EMA CALCULATION
+============================== */
+
+function calculateEMA(values, period) {
+    if (values.length < period) return null;
+
+    const multiplier = 2 / (period + 1);
+
+    // Initial EMA (SMA for the first period)
+    let ema = values
+        .slice(0, period)
+        .reduce((sum, value) => sum + value, 0) / period;
+
+    // Calculate EMA for the rest of the values
+    for (let i = period; i < values.length; i++) {
+        ema = (values[i] - ema) * multiplier + ema;
+    }
+
+    return ema;
+}
+
+/* ==============================
+   Placeholder Functions
+============================== */
+
+function startAnalysis() {
+    $("system-status").textContent = "Analyzing market...";
+    // আপনার বাকি অ্যানালিসিস কোড এখানে যুক্ত করতে পারেন
+}
+
+function recordTrade(result) {
+    tradeHistory.push(result);
+    $("stats-display").textContent = `Trades: ${tradeHistory.length} | Wins: ${tradeHistory.filter(r => r === 'WIN').length} | Win Rate: ${Math.round((tradeHistory.filter(r => r === 'WIN').length / tradeHistory.length) * 100)}%`;
+}
+
+function resetStats() {
+    tradeHistory = [];
+    $("stats-display").textContent = "Trades: 0 | Wins: 0 | Win Rate: 0%";
+    $("total-wins").textContent = "Wins in Last 30 Trades: 0";
+}
+</script>
+</body>
+</html>
+<html lang="bn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0C">
+<title>Professional Market Analysis Tool</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    padding: 16px;
+    background: #0A0A0C;
+    color: #FFFFFF;
+}
+
+h1 {
+    color: #8b80ff;
+    font-size: 24px;
+}
+
+h3 {
+    color: #b8b0ff;
+}
+
+label {
+    display: block;
+    margin: 12px 0 6px;
+}
+
+select,
+input {
+    width: 100%;
+    max-width: 450px;
+    padding: 12px;
+    margin-bottom: 12px;
+    background: #25252e;
+    color: #FFFFFF;
+    border: 1px solid #444;
+    border-radius: 7px;
+    font-size: 16px;
+}
+
+button {
+    padding: 13px 18px;
+    margin: 6px 3px;
+    border: none;
+    border-radius: 7px;
+    font-size: 15px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn {
+    background: #6C5CE7;
+    color: #FFFFFF;
+}
+
+.btn:hover {
+    background: #5F27CD;
+}
+
+.win-btn {
+    background: #00B894;
+    color: white;
+}
+
+.loss-btn {
+    background: #D63031;
+    color: white;
+}
+
+.reset-btn {
+    background: #F39C12;
+    color: white;
+}
+
+.panel {
+    background: #16161A;
+    padding: 17px;
+    border-radius: 12px;
+    margin: 15px auto;
+    border: 1px solid #30303a;
+    box-shadow: 0 4px 15px #0005;
+    width: 100%;
+    max-width: 500px;
+    overflow-wrap: anywhere;
+}
+
+.dashboard-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 18px;
+}
+
+.dashboard-container .panel {
+    flex: 1 1 280px;
+    max-width: 500px;
+}
+
+#zone-timer {
+    font-size: 16px;
+    font-weight: bold;
+    margin: 10px 0 20px;
+    color: #E0E0E0;
+}
+
+#signal-display {
+    font-size: 27px;
+    font-weight: bold;
+    margin-top: 20px;
+    overflow-wrap: anywhere;
+}
+
+#price-display {
+    font-size: 18px;
+    margin-top: 10px;
+    color: #74B9FF;
+    font-weight: bold;
+}
+
+#stats-display,
+#total-wins,
+#analysis-details {
+    font-size: 15px;
+    line-height: 1.7;
+    margin-top: 16px;
+    color: #B2BEC3;
+}
+
+#risk-mgmt {
+    font-size: 15px;
+    margin-top: 25px;
+    color: #FF7675;
+    font-weight: bold;
+}
+
+#demo-warning {
+    font-size: 14px;
+    margin-top: 12px;
+    color: #FFC0CB;
+    border: 1px solid #D63031;
+    padding: 12px;
+    border-radius: 7px;
+    background: rgba(214,48,49,0.1);
+}
+
+.chart-container {
+    border: 1px solid #444;
+    border-radius: 10px;
+    min-height: 150px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #B2BEC3;
+    background: #1E1E24;
+    margin-top: 15px;
+    padding: 15px;
+    line-height: 1.8;
+}
+
+.status {
+    color: #00e5a0;
+    overflow-wrap: anywhere;
+}
+
+.small {
+    font-size: 13px;
+    line-height: 1.6;
+    color: #b7b7c5;
+}
+
+@media (max-width: 400px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 21px;
+    }
+
+    .panel {
+        padding: 13px;
+    }
+
+    #signal-display {
+        font-size: 23px;
+    }
+}
+</style>
+</head>
+
+<body>
+
+<h1>Professional Market Analysis Tool</h1>
+
+<div class="panel">
+    <h3>Market Settings</h3>
+
+    <label for="timezone-select">Select Time Zone</label>
+    <select id="timezone-select">
+        <option value="Asia/Dhaka">BST (Bangladesh)</option>
+        <option value="Asia/Kolkata">IST (India)</option>
+        <option value="UTC">UTC</option>
+        <option value="Asia/Karachi">PKT (Pakistan)</option>
+        <option value="America/New_York">New York</option>
+        <option value="Europe/London">London</option>
+        <option value="Asia/Tokyo">Tokyo</option>
+    </select>
+
+    <div id="zone-timer">Loading time...</div>
+
+    <label for="pair-select">Select Trade Pair</label>
+    <select id="pair-select">
+        <option value="EUR/USD">EUR/USD</option>
+        <option value="USD/JPY">USD/JPY</option>
+        <option value="GBP/USD">GBP/USD</option>
+        <option value="AUD/USD">AUD/USD</option>
+        <option value="USD/CAD">USD/CAD</option>
+        <option value="USD/CHF">USD/CHF</option>
+        <option value="NZD/USD">NZD/USD</option>
+        <option value="NZD/JPY">NZD/JPY</option>
+        <option value="AUD/CAD">AUD/CAD</option>
+        <option value="GBP/NZD">GBP/NZD</option>
+        <option value="EUR/NZD">EUR/NZD</option>
+        <option value="NZD/CHF">NZD/CHF</option>
+        <option value="EUR/CAD">EUR/CAD</option>
+        <option value="GBP/AUD">GBP/AUD</option>
+        <option value="NZD/CAD">NZD/CAD</option>
+        <option value="EUR/JPY">EUR/JPY</option>
+        <option value="EUR/GBP">EUR/GBP</option>
+        <option value="AUD/CHF">AUD/CHF</option>
+        <option value="AUD/JPY">AUD/JPY</option>
+        <option value="CAD/JPY">CAD/JPY</option>
+    </select>
+
+    <label for="api-key">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</label>
     <input
         id="api-key"
         type="password"
