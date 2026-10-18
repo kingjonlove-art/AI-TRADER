@@ -2,34 +2,31 @@
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Live Market Predictor</title> <style>
-body { margin: 0; padding: 18px; background: #0b1220; color: white; font-family: Arial, sans-serif;
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#0A0A0C">
+<title>Professional Forex AI Analyzer</title>
+
+<style>
+*{box-sizing:border-box}
+body{
+    margin:0;padding:16px;
+    font-family:Arial,sans-serif;
+    background:#0A0A0C;color:#fff
 }
-.app { max-width: 450px; margin: auto; padding: 20px; background: #172033; border-radius: 16px;
+h1{text-align:center;color:#8b80ff;font-size:24px}
+h3{color:#b8b0ff}
+.panel{
+    background:#16161A;padding:17px;
+    border-radius:12px;margin:15px 0;
+    border:1px solid #30303a;
+    box-shadow:0 4px 15px #0005
 }
-h2 { color: #38bdf8; text-align: center; margin-bottom: 8px; }
-.time-box { background: #0b1220; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 12px; border: 1px solid #1e293b;
+label{display:block;margin:12px 0 6px}
+select,input{
+    width:100%;padding:12px;
+    background:#25252e;color:#fff;
+    border:1px solid #444;border-radius:7px;
+    font-size:16px
 }
-.clock { font-size: 18px; font-weight: bold; color: #38bdf8; }
-.candle-timer { font-size: 14px; color: #f59e0b; margin-top: 4px; }
-select, button { width: 100%; padding: 13px; margin: 8px 0; border: 0; border-radius: 8px; font-size: 16px;
-}
-button { background: #0284c7; color: white; cursor: pointer; }
-#price, #result { padding: 16px; margin-top: 12px; background: #0b1220; border-radius: 10px; text-align: center;
-}
-#result { font-size: 23px; font-weight: bold; }
-.small { color: #cbd5e1; font-size: 13px; line-height: 1.5; }
-</style>
-</head> <body>
-<div class="app"> <h2>📈 Live Market Predictor</h2> <div class="time-box"> <label for="timezone" class="small" style="display:block; margin-bottom:5px;">দেশ নির্বাচন করো:</label> <select id="timezone" onchange="updateClock()"> <option value="Asia/Kolkata">India (IST)</option> <option value="Asia/Dhaka">Bangladesh (BST)</option> <option value="Asia/Jakarta">Indonesia (WIB)</option> <option value="Asia/Dubai">UAE (GST)</option> <option value="Europe/London">UK (GMT)</option> <option value="America/New_York">USA (EST)</option> <option value="Asia/Tokyo">Japan (JST)</option> <option value="Australia/Sydney">Australia (AEST)</option> </select> <div class="clock" id="localClock">--:--:--</div> <div class="candle-timer" id="candleTimer">1m Candle Next: --s</div> </div> <label for="symbol">মার্কেট নির্বাচন করো</label> <select id="symbol"> <!-- Major Forex Pairs --> <option value="EURUSD">EUR/USD</option> <option value="GBPUSD">GBP/USD</option> <option value="USDJPY">USD/JPY</option> <option value="AUDUSD">AUD/USD</option> <option value="USDCAD">USD/CAD</option> <option value="USDCHF">USD/CHF</option> <option value="NZDUSD">NZD/USD</option> <!-- Other USD Pairs --> <option value="EURJPY">EUR/JPY</option> <option value="GBPJPY">GBP/JPY</option> <option value="GOLD">Gold (XAUUSD)</option> </select> <button onclick="loadMarket()">লাইভ ডেটা রিফ্রেশ</button> <div id="price">মার্কেট ডেটা লোড হচ্ছে...</div> <div id="result">WAIT</div> <p class="small" id="details"> EMA 9 · EMA 21 · RSI 14 </p> <p class="small"> এটি নিয়মভিত্তিক বিশ্লেষণ, প্রকৃত AI নয়। বাইরের ডেটা Quotex-এর দামের সঙ্গে আলাদা হতে পারে। এটি স্বয়ংক্রিয় ট্রেড করে না। আগে ডেমোতে পরীক্ষা করো। </p>
-</div> <script>
-const API = "https://biquote.io/api"; function updateClock() { const tz = document.getElementById("timezone").value; const now = new Date(); try { const timeString = now.toLocaleTimeString("en-GB", { timeZone: tz, hour12: false }); const seconds = now.getSeconds(); document.getElementById("localClock").textContent = `${tz.split('/')[1]}: ${timeString}`; const secondsRemaining = 60 - seconds; document.getElementById("candleTimer").textContent = `1m Candle Next: ${secondsRemaining}s`; if (secondsRemaining === 60) { loadMarket(); } } catch (e) { console.error("Invalid timezone", e); }
-} setInterval(updateClock, 1000);
-updateClock(); function ema(values, period) { if (values.length < period) return null; const k = 2 / (period + 1); let value = values[0]; for (let i = 1; i < values.length; i++) { value = values[i] * k + value * (1 - k); } return value;
-} function rsi(values, period = 14) { if (values.length <= period) return null; let gains = 0; let losses = 0; for (let i = 1; i <= period; i++) { const change = values[i] - values[i - 1]; if (change > 0) gains += change; else losses -= change; } let avgGain = gains / period; let avgLoss = losses / period; for (let i = period + 1; i < values.length; i++) { const change = values[i] - values[i - 1]; avgGain = (avgGain * (period - 1) + Math.max(change, 0)) / period; avgLoss = (avgLoss * (period - 1) + Math.max(-change, 0)) / period; } if (avgLoss === 0) return 100; return 100 - 100 / (1 + avgGain / avgLoss);
-} async function loadMarket() { const symbol = document.getElementById("symbol").value; const priceBox = document.getElementById("price"); const resultBox = document.getElementById("result"); const details = document.getElementById("details"); priceBox.textContent = "ডেটা লোড হচ্ছে..."; resultBox.textContent = "WAIT"; try { const response = await fetch(`${API}/${symbol}/ohlc?interval=1m&limit=100`); if (!response.ok) throw new Error("API থেকে ডেটা পাওয়া যায়নি"); const data = await response.json(); if (!Array.isArray(data.bars)) throw new Error("ক্যান্ডেল ডেটা সঠিক নয়"); const bars = data.bars .filter(b => !b.isOpen && Number.isFinite(Number(b.close))) .sort((a, b) => new Date(a.openTime) - new Date(b.openTime)); if (bars.length < 30) throw new Error("পর্যাপ্ত বন্ধ ক্যান্ডেল পাওয়া যায়নি"); const closes = bars.map(b => Number(b.close)); const last = closes[closes.length - 1]; const e9 = ema(closes.slice(-60), 9); const e21 = ema(closes.slice(-60), 21); const r = rsi(closes, 14); if (e9 === null || e21 === null || r === null) throw new Error("সূচক গণনা করা যায়নি"); priceBox.textContent = `${symbol} | শেষ বন্ধ মূল্য: ${last}`; let signal = "WAIT — পরিষ্কার সংকেত নেই"; if (e9 > e21 && last > e9 && r > 50 && r < 70) { signal = "সম্ভাব্য CALL ↑"; } else if (e9 < e21 && last < e9 && r < 50 && r > 30) { signal = "সম্ভাব্য PUT ↓"; } resultBox.textContent = signal; details.textContent = `EMA 9: ${e9.toFixed(5)} | EMA 21: ${e21.toFixed(5)} | RSI 14: ${r.toFixed(2)} | বন্ধ ক্যান্ডেল: ${bars.length}`; } catch (error) { priceBox.textContent = "ডেটা পাওয়া যায়নি"; resultBox.textContent = "WAIT"; details.textContent = error.message + "। ইন্টারনেট বা API সংযোগ পরীক্ষা করো।"; }
-} loadMarket();
-</script>
-</body>
-</html>
+button{
+    width:100%;padding:13px;margin-top:10
