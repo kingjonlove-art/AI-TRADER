@@ -1,12 +1,14 @@
 {
   "name": "my-personal-ai",
   "version": "1.0.0",
-  "description": "My Personal AI Server",
+  "description": "Express server integrated with Google Gemini AI",
   "main": "server.js",
   "scripts": {
     "start": "node server.js"
   },
   "dependencies": {
+    "@google/genai": "2.31.0",
+    "dotenv": "^16.4.7",
     "express": "^4.21.2"
   }
 }
